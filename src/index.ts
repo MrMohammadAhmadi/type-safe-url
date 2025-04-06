@@ -30,7 +30,7 @@ function createPathObject<UrlSchema>(pathSegments: string[], options: UrlBuilder
         if (key === PATH_SEGMENTS_KEY) return pathSegments
         if (key === OPTIONS_KEY) return options
 
-        return createPathObject([...pathSegments, String(key)], options)
+        return createPathObject([...pathSegments, String(key).replace("_", "-")], options)
       },
     },
   ) as any
