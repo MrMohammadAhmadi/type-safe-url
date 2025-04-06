@@ -22,8 +22,8 @@ export function createRootPathObject<UrlSchema>(options: UrlBuilderOptions = {})
 }
 function createPathObject<UrlSchema>(pathSegments: string[], options: UrlBuilderOptions): PathObject<UrlSchema> {
   return new Proxy(
-    (pathParam: unknown) => {
-      return createPathObject([...pathSegments, String(pathParam)], options)
+    (...pathParams: unknown[]) => {  // Change to accept multiple parameters
+      return createPathObject([...pathSegments, ...pathParams.map(String)], options)
     },
     {
       get(_target, key) {
@@ -35,15 +35,17 @@ function createPathObject<UrlSchema>(pathSegments: string[], options: UrlBuilder
     },
   ) as any
 }
+
+// Update the type to support multiple path parameters
 type Internal = { [PATH_SEGMENTS_KEY]: string[]; [OPTIONS_KEY]: UrlBuilderOptions }
-type PathObject<UrlSchema> = UrlSchema extends (pathParam: infer PathParam) => infer NestedUrlSchema
+type PathObject<UrlSchema> = UrlSchema extends (...pathParams: infer PathParams) => infer NestedUrlSchema
   ? MergeIntersection<
       Internal &
         ('?' extends keyof UrlSchema ? { [QUERY_PARAMS_KEY]: UrlSchema['?'] } : {}) & {
           [K in Exclude<keyof UrlSchema, '?' | symbol>]: PathObject<UrlSchema[K]>
         }
     > &
-      ((pathParam: PathParam) => PathObject<NestedUrlSchema>)
+      ((...pathParams: PathParams) => PathObject<NestedUrlSchema>)  // Change to support multiple parameters
   : MergeIntersection<
       Internal &
         ('?' extends keyof UrlSchema ? { [QUERY_PARAMS_KEY]: UrlSchema['?'] } : {}) & {
